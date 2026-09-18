@@ -21,9 +21,9 @@ export class DB {
         }
     }
 
-    static async _query(sql, params) {
+    static async _query(sql, params = []) {
         try {
-            return await DB.pool.query(sql, params).rows;
+            return await DB.pool.query(sql, params);
         }
         catch (e) {
             console.error(e.stack);
@@ -32,5 +32,7 @@ export class DB {
 
     }
 
-    //тут функции по типу addLesson
+    static async getGroups(){
+        return (await DB._query('SELECT * FROM groups')).rows;
+    }
 }

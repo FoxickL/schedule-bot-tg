@@ -3,7 +3,7 @@ import { env } from "process";
 
 export class TgBot {
     static bot = new Telegraf(env.TG_BOT_TOKEN)
-    static init() {
+    static async init() {
         let methods = Object.getOwnPropertyNames(this);
         let messages = new Map();
         let commands = new Map();
@@ -34,8 +34,15 @@ export class TgBot {
             }
         })
 
-        this.bot.launch()
-        console.log('Tg bot have started https://t.me/SMKSheduleBot')
+        try{
+            await this.bot.telegram.getMe()
+            await this.bot.launch()
+            console.log('Tg bot have started https://t.me/SMKSheduleBot')
+        }
+        catch(e){
+            console.error('Tg bot have not started')
+            throw new Error(e.message)
+        }
     }
 
     static commandStart(ctx) {

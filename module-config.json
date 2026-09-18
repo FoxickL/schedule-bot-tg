@@ -13,6 +13,10 @@
             "path": "/",
             "needInit": true
         },
+        "Schedule": {
+            "path": "/",
+            "needInit": true
+        },
         "TgBot": {
             "path": "/",
             "needInit": true

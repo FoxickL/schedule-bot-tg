@@ -9,7 +9,7 @@ class App {
             try {
                 console.log(`Importing ${module}`);
                 let moduleObject = await import(`${moduleConfig.folder}${moduleConfig.modules[module].path}${module}.mjs`);
-                
+
                 let ImportedClass = moduleObject.default || moduleObject[module];
 
                 if (ImportedClass && typeof ImportedClass === 'function') {
@@ -18,7 +18,7 @@ class App {
                     App.modules[module] = ImportedClass;
 
                     if (moduleConfig.modules[module].needInit && typeof ImportedClass.init === 'function') {
-                        ImportedClass.init();
+                        await ImportedClass.init();
                     }
                 } else {
                     throw new Error(`Класс не найден в модуле ${module}`);
@@ -26,6 +26,7 @@ class App {
 
                 console.log(`Successfully imported module ${module}`);
             } catch (e) {
+                console.error(`Failed to import module ${module}`)
                 console.error(e);
             }
         }
@@ -33,6 +34,6 @@ class App {
 }
 
 await App.init();
-// console.log((await App.modules.API.getSchedule('КИС-2419 (hub)', 1789333200))['0']); //гы)
+console.log(App.modules.Schedule.getMondayMidnight() + 604800); //гы)
 
 //надо сделать обработку запросов с фронта

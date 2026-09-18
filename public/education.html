@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <header>
+        <p class="date"></p>
+        <h1>Ваше расписание</h1>
+        <div class="week">
+            <button id="prev-week"></button>
+            <span id="current-week"></span>
+            <button id="next-week"></button>
+        </div>
+        <div id="schedule-days" class="days-grid">
+            
+        </div>
+    </header>
+    <main>
+        
+    </main>
+</body>
+<template id="day-template">
+    <button class="day-button">
+        <div class="day-name"></div>
+        <div class="day-date"></div>
+    </button>
+</template>
+<template id="lesson-template">
+    <div class="lesson-card">
+        <div class="lesson-header">
+            <div class="lesson-info">
+                <span class="lesson-time"></span>
+                <span class="lesson-number"></span>
+            </div>
+            <div class="lesson-type"></div>
+        </div>
+        <div class="lesson-subject"></div>
+        <div class="lesson-teacher"></div>
+        <div class="lesson-room"></div>
+    </div>
+</template>
+<script>
+    let weekOffset = 0;
+    console.log(getDay())
+    function updateShedule(){
+        let now = new Date();
+        let dayOfWeek = now.getDay()
+        if(dayOfWeek == 0){
+            dayOfWeek = 7;
+        }
+        let monday = new Date(now);
+        monday.setDate(now.getDate() - (dayOfWeek - 1) + (weekOffset * 7));
+        let sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        document.getElementById('current-week').textContent = `${formatDisplayDate(monday)}-${formatDisplayDate(sunday)}`;
+        document.getElementById('schedule-days').innerHTML = '';
+        
+        let dayName = [ 'Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+        for (let i = 0; i < 7; i++) {
+
+            let date = new Date(monday);
+            date.setDate(monday.getDate() + i);
+            let clone = document.getElementById('day-template').content.cloneNode(true);
+
+                clone.querySelector('.day-name').textContent = dayName[i];
+                clone.querySelector('.day-date').textContent = date.getDate();
+
+            document.getElementById('schedule-days').appendChild(clone);
+        }
+    }
+
+</script>
+</html>

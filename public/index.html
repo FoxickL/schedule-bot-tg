@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    background: #071125;
+    color: white;
+    font-family: Inter, sans-serif;
+}
+
+main {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 60px 24px 24px;
+}
+
+.img {
+    height: 120px;
+    margin: 0 auto 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 42px;
+}
+h1 {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 36px;
+    margin-bottom: 16px;
+}
+h2 {
+    margin-top: 30px;
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 16px;
+}
+.description {
+    text-align: center;
+    color: #8f98b3;
+    line-height: 1.5;
+    margin-bottom: 32px;
+}
+.choose-group{
+    display: flex;
+    justify-content: center;
+}
+.saved-group {
+    width: 440px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.saved-group button {
+    border: none;
+    background: #1a2440;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.select2-container .select2-selection--single {
+    height: 55px;
+    background: #151f36;
+    border: 1px solid #263250;
+    border-radius: 15px;
+}
+.select2-container .select2-selection--single
+.select2-selection__rendered {
+    color: white;
+    line-height: 55px;
+    padding-left: 18px;
+}
+.select2-container .select2-selection--single
+.select2-selection__arrow {
+    height: 55px;
+    right: 10px;
+}
+.select2-dropdown {
+    background: #151f36;
+    border: 1px solid #263250;
+}
+.select2-search--dropdown {
+    padding: 10px;
+}
+.select2-search--dropdown .select2-search__field {
+    width: 100%;
+    background: #0d1629;
+    color: white;
+    padding: 10px;
+}
+
+.select2-results__option {
+    color: white;
+    padding: 12px 16px;
+}
+.select2-results__option--highlighted {
+    background: #7063ff !important;
+}
+
+    </style>
+</head>
+<body>
+    <main>
+        <div class="img">
+            📅
+        </div>
+        <h1>Выберите группу</h1>
+         <p class="description">Выберите учебную группу, чтобы увидеть расписание.</p>
+        <div class="choose-group">
+            <select class="select-group">
+                <option></option>
+                <option value="1">Опция 1</option>
+                <option value="2">Опция 2</option>
+            </select>
+        </div>
+        <h2>Избранные группы</h2>
+        <div class="saved-group">
+        </div>
+    </main>    
+</body>
+<script type="module">
+    import { API } from './modules/Api.mjs';
+    $(document).ready(function() {
+    $('.select-group').select2({
+        placeholder: 'Выберите группу',
+        width: '300px',
+        ajax:{
+            transport: (params, success, failure) => {
+                API.getGroup(params.data.term || '')
+                    .then(result => {
+                        success({
+                            results: result.map(group => ({
+                                id: group.name,
+                                text: group.text
+                            }))
+                        });
+                    })
+            },
+            delay:300
+        },
+        
+    });
+  });
+</script>
+</html>

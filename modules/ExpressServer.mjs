@@ -81,6 +81,10 @@ export class ExpressServer {
     }
 
     //not api
+
+    static async getEducation(req, res){
+        res.sendFile(publicFolder('education.html'));
+    }
 }
 
 //чтение по расписанию по группе

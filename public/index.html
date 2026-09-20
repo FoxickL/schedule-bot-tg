@@ -141,12 +141,24 @@
         background:#7063ff;
         color:white;
     }
+    #open-schedule{
+        width:300px;
+        margin:20px auto 0;
+        display:block;
+        border:none;
+        background:#7063ff;
+        color:white;
+        padding:14px;
+        border-radius:12px;
+        cursor:pointer;
+        font-size:15px;
+    }
     </style>
 </head>
 <body>
     <main>
         <div class="img">
-            <img src="../1.png" height="50px"> 
+            <img src="../picture/1.png" height="50px"> 
         </div>
         <h2>Выберите тип поиска</h2>
         <div class="search-type">
@@ -161,6 +173,7 @@
                 <option></option>
             </select>
         </div>
+        <button id="open-schedule">Показать расписание</button>
         <p class="warning-text"></p>
         <h2>Избранные группы</h2>
         <div class="saved-group">
@@ -175,6 +188,7 @@ function clearActive() {
     document.getElementById('room').classList.remove('active');
 }
 let currentType = 'group';
+let selectedId = null;
 
 document.getElementById('group').addEventListener('click',e=> {
     clearActive()
@@ -223,21 +237,15 @@ $(document).ready(function () {
     $('.select-group').select2({
         placeholder: 'Выберите группу',
         width: '300px',
-        data: function(params){
-            return {
-                q: params.term
-            };
-        },
         ajax: {
             transport: async (params, success) => {
-                console.log(params)
-                let search = params.data.q;
+                let search = params.data.term || '';
                 let url;
                 if(currentType == 'group'){
                     url = `/api/groups?q=${search}`;
                 }
                 else if(currentType == 'teacher'){
-                   url = `/api/teachers?q=${search}`;
+                    url = `/api/teachers?q=${search}`;
                 }
                 else{
                     url = `/api/auditoriums?q=${search}`;
@@ -254,21 +262,26 @@ $(document).ready(function () {
     });
 
     $('.select-group').on('select2:select', async function (e) {
-        const group = e.params.data.id;
-        let response;
-        if(currentType === 'group'){
-            response = await fetch(`/api/schedule/${group}`);
-        }
-        else if(currentType === 'teacher'){
-            response = await fetch(`/api/teacher/${group}`);
-        }
-        else{
-             response = await fetch(`/api/auditoriums/${group}`);
-        }
-        
-        let schedule = await response.json();
+        selectedId = e.params.data.id;
     });
+document.getElementById('open-schedule').addEventListener('click', () => {
 
+    if (!selectedId) {
+        alert('Сначала выберите значение');
+        return;
+    }
+
+    if (currentType === 'group') {
+        window.location.href = `schedule.html?group=${selectedId}`;
+    }
+    else if (currentType === 'teacher') {
+        window.location.href = `schedule.html?teacher=${selectedId}`;
+    }
+    else {
+        window.location.href = `schedule.html?room=${selectedId}`;
+    }
+
+});
 });
 </script>
 </html>

@@ -32,11 +32,17 @@
        
         .days-grid{
             display: flex;
-            flex-direction: row;
+            align-items: center;
             gap: 10px;
         }
+        #schedule-days{
+            display:flex;
+            gap:6px;
+            flex:1;
+        }
         .day-button{
-            width: 80px;
+            flex: 1;
+            width: auto;
             border: 1px solid #2E374A;
             background-color: #1E2433;
             color:#FFFFFF;
@@ -117,86 +123,28 @@
             font-size:14px;
             margin-top:4px;
         }
+        .week-range{
+            text-align:center;
+            color:#8f98b3;
+            margin-bottom:20px;
+            font-size:14px;
+        }
 
     </style>
 </head>
 <body>
     <header>
-        <p class="date">Воскресенье 20.09.2026</p>
+        <p class="date"></p>
         <h1>Ваше расписание</h1>
-        <div id="schedule-days" class="days-grid">
+        <p class="week-range"></p>
+        <div class="days-grid">
             <button id="prev-week">❮</button>
-             <button class="day-button">
-                <div class="day-name">Пн</div>
-                <div class="day-date">21</div>
-            </button>
-            <button class="day-button">
-                <div class="day-name">Вт</div>
-                <div class="day-date">22</div>
-            </button>
-            <button class="day-button">
-                <div class="day-name">Ср</div>
-                <div class="day-date">23</div>
-            </button>
-            <button class="day-button">
-                <div class="day-name">Чт</div>
-                <div class="day-date">24</div>
-            </button>
-            <button class="day-button">
-                <div class="day-name">Пт</div>
-                <div class="day-date">25</div>
-            </button>
-            <button class="day-button">
-                <div class="day-name">Сб</div>
-                <div class="day-date">26</div>
-            </button>
-            <button class="day-button">
-                <div class="day-name">Вс</div>
-                <div class="day-date">27</div>
-            </button>
+            <div id="schedule-days"></div>
             <button id="next-week">❯</button>
         </div>
     </header>
     <main>
-        <div class="lesson-card">
-            <div class="lesson-header">
-                <div class="lesson-info">
-                    <div class="lesson-time"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">     <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"></path>     <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"></path></svg> 9:55-11:25</div>
-                    <span class="lesson-number">1 пара</span>
-                </div>
-                <div class="lesson-type">Лекция</div>
-            </div>
-            <p class="lesson-subject">Математика</p>
-            <p class="lesson-teacher">Цыбань Илья Константинович</p>
-            <p class="lesson-room">Кабинет: 404</p>
-            <p class="corpus">Корпус: 4</p>
-        </div>
-          <div class="lesson-card">
-            <div class="lesson-header">
-                <div class="lesson-info">
-                    <div class="lesson-time"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">     <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"></path>     <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"></path></svg> 9:55-11:25</div>
-                    <span class="lesson-number">1 пара</span>
-                </div>
-                <div class="lesson-type">Лекция</div>
-            </div>
-            <p class="lesson-subject">Математика</p>
-            <p class="lesson-teacher">Цыбань Илья Константинович</p>
-            <p class="lesson-room">Кабинет: 404</p>
-            <p class="corpus">Корпус: 4</p>
-        </div>
-          <div class="lesson-card">
-            <div class="lesson-header">
-                <div class="lesson-info">
-                    <div class="lesson-time"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">     <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"></path>     <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"></path></svg> 9:55-11:25</div>
-                    <span class="lesson-number">1 пара</span>
-                </div>
-                <div class="lesson-type">Лекция</div>
-            </div>
-            <p class="lesson-subject">Математика</p>
-            <p class="lesson-teacher">Цыбань Илья Константинович</p>
-            <p class="lesson-room">Кабинет: 404</p>
-            <p class="corpus">Корпус: 4</p>
-        </div>
+        
     </main>
 </body>
 <template id="day-template">
@@ -214,13 +162,22 @@
             </div>
             <div class="lesson-type"></div>
         </div>
-        <div class="lesson-subject"></div>
-        <div class="lesson-teacher"></div>
-        <div class="lesson-room"></div>
+        <p class="lesson-subject"></p>
+        <p class="lesson-teacher"></p>
+        <p class="lesson-room"></p>
+        <p class="corpus"></p>
     </div>
 </template>
 <script>
+    let params = new URLSearchParams(window.location.search);
+    let group = params.get('group');
+    let teacher = params.get('teacher');
+    let room = params.get('room');
+    console.log(group);
+    console.log(teacher);
+    console.log(room);
     let weekOffset = 0;
+    document.querySelector('.date').textContent = new Date().toLocaleDateString('ru-RU');
     function updateShedule(){
         let now = new Date();
         let dayOfWeek = now.getDay()
@@ -231,7 +188,7 @@
         monday.setDate(now.getDate() - (dayOfWeek - 1) + (weekOffset * 7));
         let sunday = new Date(monday);
         sunday.setDate(monday.getDate() + 6);
-        document.getElementById('current-week').textContent = `${monday.getDate()}.${monday.getMonth() + 1} - ${sunday.getDate()}.${sunday.getMonth() + 1}`;
+        document.querySelector('.week-range').textContent = `${monday.getDate()}.${monday.getMonth()+1} - ${sunday.getDate()}.${sunday.getMonth()+1}`;
         document.getElementById('schedule-days').innerHTML = '';
         
         let dayName = [ 'Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
@@ -245,6 +202,9 @@
                 clone.querySelector('.day-name').textContent = dayName[i];
                 clone.querySelector('.day-date').textContent = date.getDate();
 
+                if ( weekOffset == 0 && date.toDateString() == new Date().toDateString()) {
+                    clone.querySelector('.day-button').classList.add('active');
+                }
             document.getElementById('schedule-days').appendChild(clone);
         }
     }
@@ -257,5 +217,22 @@
         updateShedule()
     })
     updateShedule()
+
+
+    function renderLessons(lessons){
+        let main = document.querySelector('main')
+        main.innerHTML = ''
+        lessons.forEach(lesson => {
+            let clone = document.getElementById('lesson-template').content.cloneNode(true);
+            clone.querySelector('.lesson-time').textContent = lesson.time;
+            clone.querySelector('.lesson-number').textContent = lesson.number;
+            clone.querySelector('.lesson-type').textContent = lesson.type;
+            clone.querySelector('.lesson-subject').textContent = lesson.subject;
+            clone.querySelector('.lesson-teacher').textContent = lesson.teacher;
+            clone.querySelector('.lesson-room').textContent = `Кабинет: ${lesson.room}`;
+            clone.querySelector('.corpus').textContent = `Корпус: ${lesson.corpus}`;
+            main.appendChild(clone)
+        });
+    }
 </script>
 </html>

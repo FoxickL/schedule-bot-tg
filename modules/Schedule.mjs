@@ -21,7 +21,7 @@ export class Schedule {
             fallbackDownloadSchedule: cron.schedule(Schedule.schedules.fallbackDownloadSchedule, Schedule.fallbackDownloadSchedule, Schedule.options),
             test: cron.schedule(Schedule.schedules.test, Schedule.test, Schedule.options),
         }
-        Schedule.crons.test.start();
+        Schedule.crons.downloadSchedule.start();
     }
 
     static getMondayMidnight() {

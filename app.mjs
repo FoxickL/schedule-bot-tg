@@ -34,6 +34,3 @@ class App {
 }
 
 await App.init();
-
-
-

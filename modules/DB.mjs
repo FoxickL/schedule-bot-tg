@@ -37,6 +37,22 @@ export class DB {
         return (await DB._query('SELECT * FROM groups')).rows;
     }
 
+    static async getUsersGroupsByTgId(tg_id) {
+        return (await DB._query(`SELECT groups.id , groups.name
+            FROM user_groups
+            JOIN groups ON user_groups.group_id = groups.id
+            WHERE user_id = (SELECT id FROM users WHERE tg_id = $1)`, [tg_id])).rows;
+    }
+
+    static async getAllTgIds(){
+        return (await DB._query(`SELECT tg_id FROM users`)).rows;
+    }
+
+    static async getTodaysScheduleOnGroupe(group_id){
+        let today = new Date().toISOString().slice(0, 10)
+        return (await DB._query('SELECT * FROM schedule WHERE group_id = $1 AND date = $2', [group_id, today])).rows;
+    }
+
     static async findGroup(name) {
         return (await DB._query('SELECT * FROM groups WHERE name = $1', [name])).rows[0];
     }
@@ -45,7 +61,7 @@ export class DB {
         return (await DB._query('SELECT DISTINCT teacher FROM schedule WHERE teacher ILIKE $1 LIMIT 10', [`%${name}%`])).rows;
     }
 
-    static async findClassesWithTeacher(name){
+    static async findClassesWithTeacher(name) {
         return (await DB._query('SELECT * FROM schedule WHERE teacher = $1', [name])).rows;
     }
 
@@ -53,7 +69,7 @@ export class DB {
         return (await DB._query('SELECT DISTINCT auditorium , corpus FROM schedule WHERE auditorium ILIKE $1 LIMIT 10', [`%${name}%`])).rows;
     }
 
-    static async findClassesInAuditorium(name, corpus){
+    static async findClassesInAuditorium(name, corpus) {
         return (await DB._query('SELECT * FROM schedule WHERE auditorium = $1 AND corpus = $2', [name, corpus])).rows;
     }
 
@@ -71,8 +87,19 @@ export class DB {
         return await DB._query('INSERT INTO groups (name) VALUES ( $1 )', [name]);
     }
 
-    static async insertTgUser(tgId, group) {
-        return await DB._query('INSERT INTO users (tg_id) VALUES ( $1)', [tgId]);
+    static async insertTgUser(tgId) {
+        return await DB._query('INSERT INTO users (tg_id) VALUES ( $1) ON CONFLICT (tg_id) DO NOTHING', [tgId]);
+    }
+
+    static async insertUsersGroup(usersTgId, groupName) {
+        return await DB._query(
+            `INSERT INTO user_groups (user_id, group_id) 
+            VALUES (
+                (SELECT id FROM users WHERE tg_id = $1),
+                (SELECT id FROM groups WHERE name = $2)
+            ) ON CONFLICT (user_id , group_id) DO NOTHING`,
+            [usersTgId, groupName]
+        );
     }
 
     //UPDATE
@@ -108,10 +135,14 @@ export class DB {
     }
 
     static async deleteInactiveUsers() {
-        await DB._query(`
+        return await DB._query(`
             DELETE FROM users 
             WHERE is_active = false
         `);
+    }
+
+    static async deleteUsersGroup(tg_id, group_id) {
+        return await DB._query(`DELETE FROM user_groups WHERE user_id = (SELECT id FROM users WHERE tg_id = $1) AND group_id = $2`, [tg_id, group_id]);
     }
 
 }

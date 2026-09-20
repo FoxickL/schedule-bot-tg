@@ -1,0 +1,25 @@
+{
+    "folder": "./modules",
+    "modules": {
+        "DB": {
+            "path": "/",
+            "needInit": true
+        },
+        "API": {
+            "path": "/",
+            "needInit": false
+        },
+        "ExpressServer": {
+            "path": "/",
+            "needInit": true
+        },
+        "Schedule": {
+            "path": "/",
+            "needInit": true
+        },
+        "TgBot": {
+            "path": "/",
+            "needInit": true
+        }
+    }
+}

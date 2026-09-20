@@ -43,21 +43,82 @@ export class Schedule {
         return Math.floor(mondayMidnight.getTime() / 1000);
     }
 
-    static downloadSchedule() {
-        // скачивание расписания
-        // let timestamp = Schedule.getMondayMidnight();
-
-        // groups = Schedule.App.modules.DB.getGroups
-
-        // Schedule.App.modules.API.getSchedule()
+    static async downloadScheduleForGroup(group, timestamp) {
+        let schedule;
+        try {
+            schedule = await Schedule.App.modules.API.getSchedule(group.name, timestamp);
+        } catch (error) {
+            return false;
+        }
+        if (schedule.status >= 500 && schedule.status < 600) return false;
+        delete schedule.status;
+        delete schedule.ok;
+        for (let day in schedule) {
+            for (let lesson of schedule[day].list) {
+                let classObj = Object.assign(lesson, {
+                    date: schedule[day].date,
+                    group_id: group.id
+                });
+                await Schedule.App.modules.DB.insertClass(classObj);
+            }
+        }
+        return true
     }
 
-    static fallbackDownloadSchedule() {
-        //резервное скачивание если при первой поптыке не срослось
+    static async downloadSchedule() {
+        let baseTimestamp = Schedule.getMondayMidnight();
+
+        await Schedule.App.modules.DB.deleteInactiveGroups();
+        let groups = await Schedule.App.modules.DB.getGroups();
+
+        for (let group of groups) {
+            for (let weekOffset of [0, 604800]) {
+                let timestamp = baseTimestamp + weekOffset;
+
+                if (!await Schedule.downloadScheduleForGroup(group, timestamp)) {
+                    Schedule.crons.downloadSchedule.stop();
+                    Schedule.crons.fallbackDownloadSchedule.start();
+                    return null;
+                }
+            }
+        }
     }
 
-    static async test(){
-        console.log(await Schedule.App.modules.DB.getGroups())
+    static async fallbackDownloadSchedule() {
+        let baseTimestamp = Schedule.getMondayMidnight();
+
+        await Schedule.App.modules.DB.deleteInactiveGroups();
+        let groups = await Schedule.App.modules.DB.getGroups();
+
+        for (let group of groups) {
+            for (let weekOffset of [0, 604800]) {
+                let timestamp = baseTimestamp + weekOffset;
+
+                if (!await Schedule.downloadScheduleForGroup(group, timestamp)) {
+                    return null;
+                }
+            }
+        }
+        Schedule.crons.fallbackDownloadSchedule.stop();
+        Schedule.crons.downloadSchedule.start();
+    }
+
+    static async test() {
+        let baseTimestamp = Schedule.getMondayMidnight();
+        await Schedule.App.modules.DB.deleteInactiveGroups();
+        let groups = await Schedule.App.modules.DB.getGroups();
+        for (let group of groups) {
+            for (let weekOffset of [0, 604800]) {
+                let timestamp = baseTimestamp + weekOffset;
+
+                if (!await Schedule.downloadScheduleForGroup(group, timestamp)) {
+                    Schedule.crons.downloadSchedule.stop();
+                    Schedule.crons.fallbackDownloadSchedule.start();
+                    return null;
+                }
+            }
+        }
+        return null;
     }
 
 }

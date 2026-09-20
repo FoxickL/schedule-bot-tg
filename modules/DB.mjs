@@ -41,6 +41,22 @@ export class DB {
         return (await DB._query('SELECT * FROM groups WHERE name = $1', [name])).rows[0];
     }
 
+    static async findTeachers(name) {
+        return (await DB._query('SELECT DISTINCT teacher FROM schedule WHERE teacher ILIKE $1 LIMIT 10', [`%${name}%`])).rows;
+    }
+
+    static async findClassesWithTeacher(name){
+        return (await DB._query('SELECT * FROM schedule WHERE teacher = $1', [name])).rows;
+    }
+
+    static async findAuditoriums(name) {
+        return (await DB._query('SELECT DISTINCT auditorium , corpus FROM schedule WHERE auditorium ILIKE $1 LIMIT 10', [`%${name}%`])).rows;
+    }
+
+    static async findClassesInAuditorium(name, corpus){
+        return (await DB._query('SELECT * FROM schedule WHERE auditorium = $1 AND corpus = $2', [name, corpus])).rows;
+    }
+
     //INSERT
     static async insertClass(classObj) {
         return await DB._query(`

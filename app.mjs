@@ -34,6 +34,6 @@ class App {
 }
 
 await App.init();
-console.log(App.modules.Schedule.getMondayMidnight() + 604800); //гы)
 
-//надо сделать обработку запросов с фронта
+
+

@@ -25,9 +25,9 @@ export class API {
         }
     }
 
-    static async getGroup(group) {
+    static async getGroup(q) {
         let url = new URL('https://api.stavmk.ru/filter/groups/active-lib-scheule-group-name');
-        url.searchParams.set('q', group)
+        url.searchParams.set('q', q)
         let request = new Request(url, {
             method: 'GET',
         });
@@ -37,23 +37,6 @@ export class API {
 
     // нужена каждая полночь понедельника
     //+-604800
-    // const now = new Date();
-    // const day = now.getDay(); // 0 - воскресенье, 1 - понедельник...
-    
-    // // Находим разницу в днях до понедельника
-    // const diff = now.getDate() - day + (day === 0 ? -6 : 1); 
-    // const monday = new Date(now.setDate(diff));
-    
-    // // Устанавливаем московскую полночь (21:00 предыдущего дня по UTC)
-    // // Для этого сдвигаем дату на день назад и ставим 21:00
-    // monday.setUTCHours(21, 0, 0, 0);
-    // if (day === 0) {
-    //     // если сегодня воскресенье, то код выше уже нашел нужную полночь
-    // } else {
-    //     monday.setUTCDate(monday.getUTCDate() - 1);
-    // }
-    
-    // return Math.floor(monday.getTime() / 1000);
     
     
     static async getSchedule(group, timestamp){

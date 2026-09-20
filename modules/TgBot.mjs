@@ -112,6 +112,7 @@ export class TgBot {
             let groupId = ctx.match[1];
 
             let group = await TgBot.App.modules.DB.findGroup(groupId);
+
             if (!group) await TgBot.App.modules.DB.insertGroup(groupId);
 
             await TgBot.App.modules.DB.insertUsersGroup(ctx.from.id, groupId);
@@ -122,9 +123,9 @@ export class TgBot {
         });
     }
 
-    static commandStart(ctx) {
+    static async commandStart(ctx) {
         ctx.reply('Салам бро\nПомочь? ( /help )');
-        TgBot.App.modules.DB.insertTgUser(ctx.from.id);
+        await TgBot.App.modules.DB.insertTgUser(ctx.from.id);
     }
 
     static commandHelp(ctx) {
@@ -223,11 +224,29 @@ export class TgBot {
             });
 
             try {
-                await TgBot.bot.telegram.sendMessage(tgId.tg_id, message.trim(), { parse_mode: 'MarkdownV2' });
+                await TgBot.bot.telegram.sendMessage(
+                    tgId.tg_id,
+                    message.trim(),
+                    {
+                        parse_mode: 'MarkdownV2',
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: 'Я приду', callback_data: `i_will_come:${tgId.tg_id}` }
+                                ]
+                            ]
+                        }
+                    }
+                );
             } catch (err) {
                 console.error(`Ошибка отправки пользователю ${tgId.tg_id}:`, err.stack);
             }
         }
+    }
+
+    static async buttonI_will_come(ctx) {
+        await TgBot.App.modules.DB.updateUsersLastSeen(ctx.from.id);
+        await ctx.answerCbQuery('Отлично! Ждём тебя 👍').catch(() => { });
     }
 
 

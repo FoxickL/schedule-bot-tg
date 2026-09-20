@@ -54,7 +54,7 @@ export class DB {
     }
 
     static async findGroup(name) {
-        return (await DB._query('SELECT * FROM groups WHERE name = $1', [name])).rows[0];
+        return (await DB._query('SELECT * FROM groups WHERE name = $1', [name])).rows[0] || null;
     }
 
     static async findTeachers(name) {

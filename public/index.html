@@ -264,6 +264,20 @@ $(document).ready(function () {
     $('.select-group').on('select2:select', async function (e) {
         selectedId = e.params.data.id;
     });
+        function getMondayTimestamp() {
+            let now = new Date();
+            let day = now.getDay(); 
+            
+            
+            let diff = now.getDate() - day + (day === 0 ? -6 : 1);
+            
+            let monday = new Date(now.setDate(diff));
+            monday.setHours(0, 0, 0, 0); 
+            return Math.floor(monday.getTime() / 1000);       
+    }
+    let mondayTimestamp = getMondayTimestamp();
+
+
 document.getElementById('open-schedule').addEventListener('click', () => {
 
     if (!selectedId) {
@@ -272,7 +286,7 @@ document.getElementById('open-schedule').addEventListener('click', () => {
     }
 
     if (currentType === 'group') {
-        window.location.href = `schedule.html?group=${selectedId}`;
+        window.location.href = `schedule.html?group=${selectedId}&timestamp=${mondayTimestamp}`;
     }
     else if (currentType === 'teacher') {
         window.location.href = `schedule.html?teacher=${selectedId}`;

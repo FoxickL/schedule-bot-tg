@@ -169,16 +169,16 @@
     </div>
 </template>
 <script>
-    let params = new URLSearchParams(window.location.search);
-    let group = params.get('group');
-    let teacher = params.get('teacher');
-    let room = params.get('room');
+    let group = new URLSearchParams(window.location.search).get('group');
+    let teacher = new URLSearchParams(window.location.search).get('teacher');
+    let room = new URLSearchParams(window.location.search).get('room');
     console.log(group);
     
     let weekOffset = 0;
     document.querySelector('.date').textContent = new Date().toLocaleDateString('ru-RU');
     function updateShedule(){
         let now = new Date();
+
         let dayOfWeek = now.getDay()
         if(dayOfWeek == 0){
             dayOfWeek = 7;
@@ -197,24 +197,112 @@
             let date = new Date(monday);
             date.setDate(monday.getDate() + i);
             let clone = document.getElementById('day-template').content.cloneNode(true);
-
+            let apiDate = date.toISOString().split('T')[0]
+                clone.querySelector('.day-button').dataset.date = apiDate
                 clone.querySelector('.day-name').textContent = dayName[i];
                 clone.querySelector('.day-date').textContent = date.getDate();
+                clone.querySelector('.day-button').addEventListener('click', e => {
+                    document.querySelectorAll('.day-button').forEach(button => {
+                        button.classList.remove('active');
+                    });
 
-                if ( weekOffset == 0 && date.toDateString() == new Date().toDateString()) {
-                    clone.querySelector('.day-button').classList.add('active');
-                }
+                    e.currentTarget.classList.add('active');
+                    let day = scheduleData.find(item => item.date == apiDate)
+                    
+                    renderDay(day);
+                
+            });
+                
             document.getElementById('schedule-days').appendChild(clone);
         }
     }
-    document.getElementById('prev-week').addEventListener('click', e=>{
+    document.getElementById('prev-week').addEventListener('click', async e=>{
         weekOffset--;
-        updateShedule()
+        let now = new Date();
+        let dayOfWeek = now.getDay() || 7;
+        
+        let monday = new Date(now);
+        monday.setDate(now.getDate() - (dayOfWeek - 1) + weekOffset * 7);
+        
+        let timestamp = Math.floor(monday.getTime() / 1000);
+        
+        let resp = await fetch(`/api/schedule/${group}?timestamp=${timestamp}`)
+        let data = await resp.json()
+        scheduleData = Object.values(data).filter(item => item.date);
+        updateShedule();
+        renderDay(scheduleData[0]);
+
+        document.querySelectorAll('.day-button').forEach(button => {
+            if(button.dataset.date == scheduleData[0].date){
+                button.classList.toggle('active');
+            }
+        });
     })
-    document.getElementById('next-week').addEventListener('click', e=>{
-        weekOffset++;
-        updateShedule()
+        document.getElementById('next-week').addEventListener('click', async e=>{
+            weekOffset++;
+        let now = new Date();
+        let dayOfWeek = now.getDay() || 7;
+
+        let monday = new Date(now);
+        monday.setDate(now.getDate() - (dayOfWeek - 1) + weekOffset * 7);
+
+        let timestamp = Math.floor(monday.getTime() / 1000);
+
+        let resp = await fetch(`/api/schedule/${group}?timestamp=${timestamp}`)
+        let data = await resp.json()
+        scheduleData = Object.values(data).filter(item => item.date);
+        updateShedule();
+        renderDay(scheduleData[0]);
+
+        document.querySelectorAll('.day-button').forEach(button => {
+            if(button.dataset.date == scheduleData[0].date){
+                button.classList.toggle('active');
+            }
+        }); 
     })
     updateShedule()
+    let scheduleData = [];
+    fetch(`/api/schedule/${group}?timestamp=${new URLSearchParams(window.location.search).get('timestamp')}`)
+    .then(resp => resp.json())
+    .then(data => {
+        scheduleData = Object.values(data).filter(item => item.date);
+
+        console.log(scheduleData);
+        let today = new Date();
+
+        let todayDate = new Date().toISOString().split('T')[0];
+
+        let currentDay = scheduleData.find(item => item.date === todayDate);
+        renderDay(currentDay);
+        document.querySelectorAll('.day-button').forEach(button => {
+            if (button.dataset.date === todayDate) {
+                button.classList.add('active');
+            }
+        })   
+    });
+    function renderDay(day){
+    
+        document.querySelector('main').innerHTML = '';
+        if(!day){
+            let p = document.createElement('p')
+            p.textContent = 'На этот день занятий нет';
+            p.style.color = '#fff';
+            p.style.textAlign = 'center';
+            document.querySelector('main').appendChild(p)
+            return
+        }
+            day.list.forEach(lesson => {
+                let clone = document.getElementById('lesson-template').content.cloneNode(true);
+                clone.querySelector('.lesson-time').textContent = `${lesson.timeStart} - ${lesson.timeEnd}`;
+                clone.querySelector('.lesson-number').textContent = `${lesson.number} пара`;
+                clone.querySelector('.lesson-type').textContent = lesson.types;
+                clone.querySelector('.lesson-subject').textContent = lesson.disciplines;
+                clone.querySelector('.lesson-teacher').textContent = lesson.teachers;
+                clone.querySelector('.lesson-room').textContent = `Кабинет: ${lesson.auditorium}`;
+                clone.querySelector('.corpus').textContent = `Корпус: ${lesson.corpus}`;
+                document.querySelector('main').appendChild(clone);
+        });
+    };
+    
 </script>
 </html>

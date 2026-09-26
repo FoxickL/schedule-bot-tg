@@ -181,7 +181,6 @@
     </main>    
 </body>
 <script>
-
 function clearActive() {
     document.getElementById('group').classList.remove('active');
     document.getElementById('teacher').classList.remove('active');
@@ -193,11 +192,10 @@ let selectedId = null;
 document.getElementById('group').addEventListener('click',e=> {
     clearActive()
     currentType = 'group';
+    if(document.querySelector('.select2-selection__placeholder')){
+        document.querySelector('.select2-selection__placeholder').textContent = 'Выберите номер кабинета';
+    }
     document.getElementById('group').classList.add('active')
-    $('.select-group').select2({
-        placeholder: 'Введите название группы',
-        width:'300px'
-    });
     document.querySelector('.choice').textContent = 'Выберите группу'
     document.querySelector('.description').textContent = 'Выберите учебную группу, чтобы увидеть расписание.' 
     document.querySelector('.warning-text').textContent = ''
@@ -206,11 +204,10 @@ document.getElementById('group').addEventListener('click',e=> {
 document.getElementById('teacher').addEventListener('click',e=> {
     clearActive()
     currentType = 'teacher';
+    if(document.querySelector('.select2-selection__placeholder')){
+        document.querySelector('.select2-selection__placeholder').textContent = 'Выберите номер кабинета';
+    }
     document.getElementById('teacher').classList.add('active')
-    $('.select-group').select2({
-        placeholder: 'Введите ФИО преподавателя',
-        width: '300px'
-    });
     document.querySelector('.choice').textContent = 'Выберите преподователя'
     document.querySelector('.description').textContent = 'Выберите преподователя, чтобы увидеть его расписание.' 
     document.querySelector('.warning-text').textContent = 'Некоторые данные могуть быть не полноценные'
@@ -221,11 +218,10 @@ document.getElementById('teacher').addEventListener('click',e=> {
 document.getElementById('room').addEventListener('click',e=> {
     clearActive()
     currentType = 'room';
+    if(document.querySelector('.select2-selection__placeholder')){
+        document.querySelector('.select2-selection__placeholder').textContent = 'Выберите номер кабинета';
+    }
     document.getElementById('room').classList.add('active')
-    $('.select-group').select2({
-        placeholder: 'Введите кабинет',
-        width:'300px'
-    })
     document.querySelector('.choice').textContent = 'Выберите кабинет'
     document.querySelector('.description').textContent = 'Выберите кабинет, чтобы увидеть все занятые кабинеты.' 
     document.querySelector('.warning-text').textContent = 'Некоторые данные могуть быть не полноценные'
@@ -235,7 +231,7 @@ document.getElementById('room').addEventListener('click',e=> {
 $(document).ready(function () {
 
     $('.select-group').select2({
-        placeholder: 'Выберите группу',
+        placeholder:'Выберите группу',
         width: '300px',
         ajax: {
             transport: async (params, success) => {
@@ -252,8 +248,24 @@ $(document).ready(function () {
                 }
                 let response = await fetch(url);
                 let data = await response.json();
+                let results;
+                 if (currentType == 'group') {
+                    results = data.results;
+                }
+                else if (currentType == 'teacher') {
+                    results = data.map(teacher => ({
+                        id: teacher.teacher,
+                        text: teacher.teacher
+                    }));
+                }
+                else {
+                    results = data.map(room => ({
+                        id: room.auditorium,
+                        text: `${room.auditorium} — ${room.corpus}`
+                    }));
+                }
                 success({
-                    results: data.results
+                    results: results
                 });
             },
 
@@ -267,10 +279,8 @@ $(document).ready(function () {
         function getMondayTimestamp() {
             let now = new Date();
             let day = now.getDay(); 
-            
-            
             let diff = now.getDate() - day + (day === 0 ? -6 : 1);
-            
+    
             let monday = new Date(now.setDate(diff));
             monday.setHours(0, 0, 0, 0); 
             return Math.floor(monday.getTime() / 1000);       

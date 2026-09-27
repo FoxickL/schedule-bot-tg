@@ -188,6 +188,7 @@ function clearActive() {
 }
 let currentType = 'group';
 let selectedId = null;
+let selectedCorpus = null;
 
 document.getElementById('group').addEventListener('click',e=> {
     clearActive()
@@ -195,6 +196,7 @@ document.getElementById('group').addEventListener('click',e=> {
     if(document.querySelector('.select2-selection__placeholder')){
         document.querySelector('.select2-selection__placeholder').textContent = 'Выберите номер кабинета';
     }
+    $('.select-group').val(null).trigger('change');
     document.getElementById('group').classList.add('active')
     document.querySelector('.choice').textContent = 'Выберите группу'
     document.querySelector('.description').textContent = 'Выберите учебную группу, чтобы увидеть расписание.' 
@@ -207,6 +209,7 @@ document.getElementById('teacher').addEventListener('click',e=> {
     if(document.querySelector('.select2-selection__placeholder')){
         document.querySelector('.select2-selection__placeholder').textContent = 'Выберите номер кабинета';
     }
+    $('.select-group').val(null).trigger('change');
     document.getElementById('teacher').classList.add('active')
     document.querySelector('.choice').textContent = 'Выберите преподователя'
     document.querySelector('.description').textContent = 'Выберите преподователя, чтобы увидеть его расписание.' 
@@ -221,6 +224,7 @@ document.getElementById('room').addEventListener('click',e=> {
     if(document.querySelector('.select2-selection__placeholder')){
         document.querySelector('.select2-selection__placeholder').textContent = 'Выберите номер кабинета';
     }
+    $('.select-group').val(null).trigger('change');
     document.getElementById('room').classList.add('active')
     document.querySelector('.choice').textContent = 'Выберите кабинет'
     document.querySelector('.description').textContent = 'Выберите кабинет, чтобы увидеть все занятые кабинеты.' 
@@ -261,7 +265,8 @@ $(document).ready(function () {
                 else {
                     results = data.map(room => ({
                         id: room.auditorium,
-                        text: `${room.auditorium} — ${room.corpus}`
+                        text: `${room.auditorium} - ${room.corpus}`,
+                        corpus: room.corpus
                     }));
                 }
                 success({
@@ -275,6 +280,7 @@ $(document).ready(function () {
 
     $('.select-group').on('select2:select', async function (e) {
         selectedId = e.params.data.id;
+        selectedCorpus = e.params.data.corpus;
     });
         function getMondayTimestamp() {
             let now = new Date();
@@ -302,7 +308,7 @@ document.getElementById('open-schedule').addEventListener('click', () => {
         window.location.href = `schedule.html?teacher=${selectedId}`;
     }
     else {
-        window.location.href = `schedule.html?room=${selectedId}`;
+        window.location.href = `schedule.html?room=${selectedId}&corpus=${selectedCorpus}`;
     }
 
 });

@@ -24,7 +24,7 @@
             padding:20px;
         }
         h1{
-            color: white;
+            color: #FFFFFF;
             text-align:center;
             font-size:28px;
             margin-bottom:20px;
@@ -105,7 +105,8 @@
             font-size:14px; 
         }
         .lesson-type{
-            background:#7063ff;
+            color: #FFFFFF;
+            border: 1px solid #FFFFFF;
             padding:4px 10px;
             border-radius:8px;
             font-size:12px;
@@ -118,7 +119,7 @@
             margin-bottom:8px;
         }
 
-        .lesson-teacher,.lesson-room,.corpus{
+        .lesson-teacher,.lesson-room,.corpus,.subgroup{
             color:#8f98b3;
             font-size:14px;
             margin-top:4px;
@@ -166,12 +167,14 @@
         <p class="lesson-teacher"></p>
         <p class="lesson-room"></p>
         <p class="corpus"></p>
+        <p class="subgroup"></p>
     </div>
 </template>
 <script>
     let group = new URLSearchParams(window.location.search).get('group');
     let teacher = new URLSearchParams(window.location.search).get('teacher');
     let room = new URLSearchParams(window.location.search).get('room');
+    let corpus = new URLSearchParams(window.location.search).get('corpus');
     let scheduleUrl;
 
     if (group) {
@@ -179,11 +182,11 @@
     } else if (teacher) {
         scheduleUrl = `/api/teacher/${encodeURIComponent(teacher)}`;
     } else if (room) {
-        scheduleUrl = `/api/auditorium/${encodeURIComponent(room)}`;
+        scheduleUrl = `/api/auditorium/${encodeURIComponent(room)}?corpus=${encodeURIComponent(corpus)}`;
     }
     
     let weekOffset = 0;
-    document.querySelector('.date').textContent = new Date().toLocaleDateString('ru-RU');
+    document.querySelector('.date').textContent = new Date().toLocaleDateString('sv-SE');
     function updateShedule(){
         let now = new Date();
 
@@ -215,9 +218,16 @@
                     });
 
                     e.currentTarget.classList.add('active');
-                    let day = scheduleData.find(item => item.date == apiDate)
-                    
-                    renderDay(day);
+                    if(group){
+                        let day = scheduleData.find(item => item.date == apiDate)
+                        renderDay(day);
+                    }
+                    else if(teacher){
+                        renderTeacherDay(apiDate);
+                    }
+                    else if(room){
+                        renderTeacherDay(apiDate)
+                    }
                 
             });
                 
@@ -234,15 +244,34 @@
         monday.setDate(now.getDate() - (dayOfWeek - 1) + weekOffset * 7);
         
         let timestamp = Math.floor(monday.getTime() / 1000);
-        
-        let resp = await fetch(`${scheduleUrl}?timestamp=${timestamp}`)
+        let fetchUrl;
+
+        if (room) {
+            fetchUrl = scheduleUrl;
+        }
+        else if(teacher){
+            fetchUrl = scheduleUrl;
+        }  
+        else {
+            fetchUrl = `${scheduleUrl}?timestamp=${timestamp}`;
+        }
+
+        let resp = await fetch(fetchUrl);
         let data = await resp.json()
         scheduleData = Object.values(data).filter(item => item.date);
         updateShedule();
-        renderDay(scheduleData[0]);
+        if(group){
+            renderDay(scheduleData[0]);
+        }
+        else if(teacher){
+            renderTeacherDay(monday.toLocaleDateString('sv-SE'))
+        }
+        else if(room){
+            renderTeacherDay(monday.toLocaleDateString('sv-SE'))
+        }
 
         document.querySelectorAll('.day-button').forEach(button => {
-            if(button.dataset.date == scheduleData[0].date){
+            if(button.dataset.date == monday.toLocaleDateString('sv-SE')){
                 button.classList.toggle('active');
             }
         });
@@ -256,22 +285,52 @@
         monday.setHours(0, 0, 0, 0);
         monday.setDate(now.getDate() - (dayOfWeek - 1) + weekOffset * 7);
         let timestamp = Math.floor(monday.getTime() / 1000);
+        let fetchUrl;
 
-        let resp = await fetch(`${scheduleUrl}?timestamp=${timestamp}`)
+        if (room) {
+            fetchUrl = scheduleUrl;
+        }
+        else if(teacher){
+            fetchUrl = scheduleUrl;
+        } 
+        else {
+            fetchUrl = `${scheduleUrl}?timestamp=${timestamp}`;
+        }
+        let resp = await fetch(fetchUrl)
         let data = await resp.json()
         scheduleData = Object.values(data).filter(item => item.date);
         updateShedule();
-        renderDay(scheduleData[0]);
+        if(group){
+            renderDay(scheduleData[0]);
+        }
+        else if(teacher){
+            renderTeacherDay(monday.toLocaleDateString('sv-SE'));
+        }
+        else if(room){
+            renderTeacherDay(monday.toLocaleDateString('sv-SE'))
+        }
 
         document.querySelectorAll('.day-button').forEach(button => {
-            if(button.dataset.date == scheduleData[0].date){
+            if(button.dataset.date == monday.toLocaleDateString('sv-SE')){
                 button.classList.toggle('active');
             }
         }); 
     })
     updateShedule()
     let scheduleData = [];
-    fetch(`${scheduleUrl}?timestamp=${new URLSearchParams(window.location.search).get('timestamp')}`)
+    let timestamp = new URLSearchParams(window.location.search).get('timestamp');
+    let fetchUrl;
+
+    if (room) {
+        fetchUrl = scheduleUrl;
+    }
+    else if(teacher){
+        fetchUrl = scheduleUrl;
+    } 
+    else {
+        fetchUrl = `${scheduleUrl}?timestamp=${timestamp}`;
+    }
+    fetch(fetchUrl)
     .then(resp => resp.json())
     .then(data => {
         scheduleData = Object.values(data).filter(item => item.date);
@@ -279,21 +338,30 @@
         console.log(scheduleData);
         let todayDate = new Date().toLocaleDateString('sv-SE');
 
-        let currentDay = scheduleData.find(item => item.date === todayDate);
-        renderDay(currentDay);
+        if(group){
+            let currentDay = scheduleData.find(item => item.date == todayDate);
+            renderDay(currentDay);
+        }
+        else if(teacher){
+            renderTeacherDay(todayDate);
+        }
+        else if(room){
+            renderTeacherDay(todayDate);
+        }
         document.querySelectorAll('.day-button').forEach(button => {
-            if (button.dataset.date === todayDate) {
+            if (button.dataset.date == todayDate) {
                 button.classList.add('active');
             }
         })   
     });
+    
     function renderDay(day){
     
         document.querySelector('main').innerHTML = '';
         if(!day){
             let p = document.createElement('p')
             p.textContent = 'На этот день занятий нет';
-            p.style.color = '#fff';
+            p.style.color = '#FFFFFF';
             p.style.textAlign = 'center';
             document.querySelector('main').appendChild(p)
             return
@@ -307,8 +375,43 @@
                 clone.querySelector('.lesson-teacher').textContent = lesson.teachers;
                 clone.querySelector('.lesson-room').textContent = `Кабинет: ${lesson.auditorium}`;
                 clone.querySelector('.corpus').textContent = `Корпус: ${lesson.corpus}`;
+                if(lesson.subgroup > 0){
+                    clone.querySelector('.subgroup').textContent = `Подгруппа: ${lesson.subgroup}`;
+                }
                 document.querySelector('main').appendChild(clone);
         });
     };
+    function renderTeacherDay(date){
+
+        document.querySelector('main').innerHTML = '';
+
+        let lessons = scheduleData.filter(item =>
+            new Date(item.date).toLocaleDateString('sv-SE') == date
+        );
+
+        if(lessons.length == 0){
+            let p = document.createElement('p');
+            p.textContent = 'На этот день занятий нет';
+            p.style.color = '#FFFFFF';
+            p.style.textAlign = 'center';
+            document.querySelector('main').appendChild(p);
+            return;
+        }
+
+        lessons.forEach(lesson => {
+            let clone = document.getElementById('lesson-template').content.cloneNode(true);
+            clone.querySelector('.lesson-time').textContent = `${lesson.time_start.slice(0, 5)} - ${lesson.time_end.slice(0, 5)}`;
+            clone.querySelector('.lesson-number').textContent = `${lesson.number} пара`;
+            clone.querySelector('.lesson-type').textContent = lesson.type;
+            clone.querySelector('.lesson-subject').textContent = lesson.discipline;
+            clone.querySelector('.lesson-teacher').textContent = lesson.teacher;
+            clone.querySelector('.lesson-room').textContent = `Кабинет: ${lesson.auditorium}`;
+            clone.querySelector('.corpus').textContent = `Корпус: ${lesson.corpus}`;
+            if(lesson.subgroup > 0){
+                clone.querySelector('.subgroup').textContent = `Подгруппа: ${lesson.subgroup}`;
+            }
+            document.querySelector('main').appendChild(clone);
+        });
+    }
 </script>
 </html>

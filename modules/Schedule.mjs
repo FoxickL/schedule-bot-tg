@@ -22,7 +22,6 @@ export class Schedule {
             test: cron.schedule(Schedule.schedules.test, Schedule.test, Schedule.options),
         }
         Schedule.crons.downloadSchedule.start();
-        Schedule.test();
     }
 
     static getMondayMidnight() {
@@ -69,7 +68,7 @@ export class Schedule {
     static async downloadSchedule() {
         let baseTimestamp = Schedule.getMondayMidnight();
 
-        // await Schedule.App.modules.DB.deleteInactiveGroups();
+        await Schedule.App.modules.DB.deleteInactiveGroups();
         let groups = await Schedule.App.modules.DB.getGroups();
 
         for (let group of groups) {
@@ -106,9 +105,8 @@ export class Schedule {
 
     static async test() {
         let baseTimestamp = Schedule.getMondayMidnight();
-        // await Schedule.App.modules.DB.deleteInactiveGroups();
+        await Schedule.App.modules.DB.deleteInactiveGroups();
         let groups = await Schedule.App.modules.DB.getGroups();
-        console.log('GROUPS:', groups);
         for (let group of groups) {
             for (let weekOffset of [0, 604800]) {
                 let timestamp = baseTimestamp + weekOffset;

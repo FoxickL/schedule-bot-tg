@@ -7,7 +7,6 @@ const publicFolder = (p) => { return path.resolve(`${import.meta.dirname}/../pub
 export class ExpressServer {
     static port = 3333
 
-    
     static init() {
         const server = express();
         server.use(express.static(publicFolder('')));
@@ -70,7 +69,7 @@ export class ExpressServer {
     }
 
     static async getApiAuditoriumPName(req, res) { // /api/auditoriums/:name
-        res.send(await ExpressServer.App.modules.DB.findClassesInAuditorium(req.params.name));
+        res.send(await ExpressServer.App.modules.DB.findClassesInAuditorium(req.params.name,req.query.corpus));
     }
 
     static async getApiTeachers(req, res) { // /api/teachers?q

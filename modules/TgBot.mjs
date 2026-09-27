@@ -109,26 +109,158 @@ export class TgBot {
         });
 
         this.groupSearchScene.action(/^select_group:(.+)$/, async (ctx) => {
-            let groupId = ctx.match[1];
+            const groupName = ctx.match[1];
 
-            let group = await TgBot.App.modules.DB.findGroup(groupId);
-            if (!group) await TgBot.App.modules.DB.insertGroup(groupId);
+            let group = await TgBot.App.modules.DB.findGroup(groupName);
+            if (!group) {
+                await TgBot.App.modules.DB.insertGroup(groupName);
+                group = await TgBot.App.modules.DB.findGroup(groupName);
+            }
 
-            await TgBot.App.modules.DB.insertUsersGroup(ctx.from.id, groupId);
+            await TgBot.App.modules.DB.insertUsersGroup(ctx.from.id, groupName);
+            
+            try {
+                await TgBot.App.modules.Schedule.downloadScheduleForGroup(
+                    group,
+                    TgBot.App.modules.Schedule.getMondayMidnight()
+                );
+                await TgBot.App.modules.Schedule.downloadScheduleForGroup(
+                    group,
+                    TgBot.App.modules.Schedule.getMondayMidnight() + 604800
+                );
+            } catch (e) {
+                console.error('Ошибка загрузки расписания для группы', groupName, e.stack);
+            }
 
             await ctx.answerCbQuery().catch(() => { });
-            await ctx.reply(`Отлично! Вы выбрали группу ${groupId}. Поиск завершен.`);
+            await ctx.reply(`Отлично! Вы выбрали группу ${groupName}.`);
+
+            await TgBot.sendTodayScheduleForGroup(ctx.from.id, group.id, group.name, ctx);
+
             return ctx.scene.leave();
         });
     }
 
-    static commandStart(ctx) {
+
+    static typeLabels = {
+        'Пр': 'Практика',
+        'Лк': 'Лекция',
+        'Лаб': 'Лаб. работа'
+    };
+
+    static escapeM2(text) {
+        if (!text) return '';
+        return String(text).replace(/[_*\[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+    }
+
+    static buildGroupScheduleBlock(groupName, groupSchedule) {
+        const escapeM2 = TgBot.escapeM2;
+        const typeLabels = TgBot.typeLabels;
+
+        let block = `\n👥 *Группа: ${escapeM2(groupName)}*\n`;
+        block += `───────────────────\n`;
+
+        if (!groupSchedule || groupSchedule.length === 0) {
+            block += "🎉 Пар нет, можно отдыхать\\!\n";
+            return block;
+        }
+
+        const sortedPairs = [...groupSchedule].sort((a, b) => a.number - b.number);
+
+        sortedPairs.forEach(pair => {
+            const start = pair.time_start ? pair.time_start.slice(0, 5) : '00:00';
+            const end = pair.time_end ? pair.time_end.slice(0, 5) : '00:00';
+            const pairType = typeLabels[pair.type] || pair.type || '';
+            const subgroupInfo = pair.subgroup && pair.subgroup !== '0'
+                ? ` \\[${escapeM2(pair.subgroup)} подгруппа\\]`
+                : "";
+            const formattedTime = `${escapeM2(start)} \\- ${escapeM2(end)}`;
+
+            block += `*${pair.number} пара* 🕒 \`${formattedTime}\`\n`;
+            block += `📚 *${escapeM2(pair.discipline)}* \\(${escapeM2(pairType)}\\)${subgroupInfo}\n`;
+            block += `📍 ${escapeM2(pair.corpus)}, ауд\\. \`${escapeM2(pair.auditorium)}\`\n`;
+            block += `👨‍🏫 _${escapeM2(pair.teacher)}_\n\n`;
+        });
+
+        return block;
+    }
+
+    static scheduleKeyboard(tgId) {
+        return {
+            inline_keyboard: [[{ text: 'Я приду', callback_data: `i_will_come:${tgId}` }]]
+        };
+    }
+
+
+    static async sendTodaySchedule(tgId, ctx = null) {
+        const groups = await TgBot.App.modules.DB.getUsersGroupsByTgId(tgId);
+
+        if (!groups || groups.length === 0) {
+            const text = 'У вас нет отслеживаемых групп\\. Добавьте через /add\\_group';
+            if (ctx) await ctx.reply(text, { parse_mode: 'MarkdownV2' });
+            return;
+        }
+
+        let message = "📋 *Расписание на сегодня*\n";
+
+        for (const group of groups) {
+            const groupSchedule = await TgBot.App.modules.DB.getTodaysScheduleOnGroupe(group.id) || [];
+            message += TgBot.buildGroupScheduleBlock(group.name, groupSchedule);
+        }
+
+        const text = message.trim();
+        const keyboard = TgBot.scheduleKeyboard(tgId);
+
+        if (ctx) {
+            await ctx.reply(text, { parse_mode: 'MarkdownV2', reply_markup: keyboard });
+        } else {
+            try {
+                await TgBot.bot.telegram.sendMessage(tgId, text, {
+                    parse_mode: 'MarkdownV2',
+                    reply_markup: keyboard
+                });
+            } catch (err) {
+                console.error(`Ошибка отправки пользователю ${tgId}:`, err.stack);
+            }
+        }
+    }
+
+    static async sendTodayScheduleForGroup(tgId, groupId, groupName, ctx = null) {
+        const groupSchedule = await TgBot.App.modules.DB.getTodaysScheduleOnGroupe(groupId) || [];
+
+        let message = "📋 *Расписание на сегодня*\n";
+        message += TgBot.buildGroupScheduleBlock(groupName, groupSchedule);
+
+        const text = message.trim();
+        const keyboard = TgBot.scheduleKeyboard(tgId);
+
+        if (ctx) {
+            await ctx.reply(text, { parse_mode: 'MarkdownV2', reply_markup: keyboard });
+        } else {
+            try {
+                await TgBot.bot.telegram.sendMessage(tgId, text, {
+                    parse_mode: 'MarkdownV2',
+                    reply_markup: keyboard
+                });
+            } catch (err) {
+                console.error(`Ошибка отправки пользователю ${tgId}:`, err.stack);
+            }
+        }
+    }
+
+
+    static async commandStart(ctx) {
         ctx.reply('Салам бро\nПомочь? ( /help )');
-        TgBot.App.modules.DB.insertTgUser(ctx.from.id);
+        await TgBot.App.modules.DB.insertTgUser(ctx.from.id);
     }
 
     static commandHelp(ctx) {
-        ctx.reply('/add_group - добавить группу в отслеживаемые\n/my_groups - посмотреть все выбранные группы\n/delete_group - отписаться от расписания этой группы')
+        ctx.reply(
+            '/add_group - добавить группу в отслеживаемые\n' +
+            '/my_groups - посмотреть все выбранные группы\n' +
+            '/delete_group - отписаться от расписания этой группы\n' +
+            '/schedule - расписание на сегодня'
+        );
     }
 
     static async commandAdd_group(ctx) {
@@ -151,6 +283,11 @@ export class TgBot {
         );
     }
 
+    static async commandSchedule(ctx) {
+        await TgBot.sendTodaySchedule(ctx.from.id, ctx);
+    }
+
+
     static async buttonDelete_group(ctx) {
         let groupId = ctx.match[1];
         await TgBot.App.modules.DB.deleteUsersGroup(ctx.from.id, groupId);
@@ -159,76 +296,16 @@ export class TgBot {
         await ctx.editMessageText('Группа удалена.');
     }
 
-    static async ScheduleDistribution() {
-        let cashe = new Map();
-        let tgIds = await TgBot.App.modules.DB.getAllTgIds();
-
-        const typeLabels = {
-            'Пр': 'Практика',
-            'Лк': 'Лекция',
-            'Лаб': 'Лаб. работа'
-        };
-
-        const escapeM2 = (text) => {
-            if (!text) return '';
-            return String(text).replace(/[_*\[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
-        };
-
-        for (let tgId of tgIds) {
-            let groups = await TgBot.App.modules.DB.getUsersGroupsByTgId(tgId.tg_id);
-            if (!groups || groups.length == 0) continue;
-
-            let schedules = {};
-            for (let group of groups) {
-                if (cashe.has(group.id)) {
-                    schedules[group.name] = cashe.get(group.id);
-                } else {
-                    schedules[group.name] = await TgBot.App.modules.DB.getTodaysScheduleOnGroupe(group.id);
-                    cashe.set(group.id, schedules[group.name]);
-                }
-            }
-
-            let message = "📋 *Расписание на сегодня*\n";
-
-            groups.forEach(group => {
-                let groupName = group.name;
-                let groupSchedule = schedules[groupName] || [];
-
-                message += `\n👥 *Группа: ${escapeM2(groupName)}*\n`;
-                message += `───────────────────\n`;
-
-                if (groupSchedule.length === 0) {
-                    message += "🎉 Пар нет, можно отдыхать\\!\n";
-                    return;
-                }
-
-                let sortedPairs = [...groupSchedule].sort((a, b) => a.number - b.number);
-
-                sortedPairs.forEach(pair => {
-                    let start = pair.time_start ? pair.time_start.slice(0, 5) : '00:00';
-                    let end = pair.time_end ? pair.time_end.slice(0, 5) : '00:00';
-
-                    let pairType = typeLabels[pair.type] || pair.type || '';
-                    let subgroupInfo = pair.subgroup && pair.subgroup !== '0'
-                        ? ` \\[${escapeM2(pair.subgroup)} подгруппа\\]`
-                        : "";
-
-                    let formattedTime = `${escapeM2(start)} \\- ${escapeM2(end)}`;
-
-                    message += `*${pair.number} пара* 🕒 \`${formattedTime}\`\n`;
-                    message += `📚 *${escapeM2(pair.discipline)}* \\(${escapeM2(pairType)}\\)${subgroupInfo}\n`;
-                    message += `📍 ${escapeM2(pair.corpus)}, ауд\\. \`${escapeM2(pair.auditorium)}\`\n`;
-                    message += `👨‍🏫 _${escapeM2(pair.teacher)}_\n\n`;
-                });
-            });
-
-            try {
-                await TgBot.bot.telegram.sendMessage(tgId.tg_id, message.trim(), { parse_mode: 'MarkdownV2' });
-            } catch (err) {
-                console.error(`Ошибка отправки пользователю ${tgId.tg_id}:`, err.stack);
-            }
-        }
+    static async buttonI_will_come(ctx) {
+        await TgBot.App.modules.DB.updateUsersLastSeen(ctx.from.id);
+        await ctx.answerCbQuery('Отлично! Ждём тебя 👍').catch(() => { });
     }
 
 
+    static async ScheduleDistribution() {
+        let tgIds = await TgBot.App.modules.DB.getAllTgIds();
+        for (let tgId of tgIds) {
+            await TgBot.sendTodaySchedule(tgId.tg_id);
+        }
+    }
 }

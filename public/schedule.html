@@ -130,6 +130,25 @@
             margin-bottom:20px;
             font-size:14px;
         }
+        #prev-week:disabled,#next-week:disabled{
+            color: #4b5263;
+            opacity: 0.5;
+        }
+
+        #prev-week:disabled:hover,#next-week:disabled:hover{
+            color: #4b5263;
+        }
+        #button-back{
+            display: flex;
+            color: #FFFFFF;
+            background-color: transparent;
+            border: none;
+            transition:250ms ;
+        }
+        #button-back:hover{
+            color: #a7a2a2;
+            cursor: pointer;
+        }
 
     </style>
 </head>
@@ -145,7 +164,12 @@
         </div>
     </header>
     <main>
-        
+        <div class="Schedule">
+
+        </div>
+        <div class="button-back">
+            <button id="button-back">← Назад</button>
+        </div>
     </main>
 </body>
 <template id="day-template">
@@ -235,7 +259,14 @@
         }
     }
     document.getElementById('prev-week').addEventListener('click', async e=>{
+        if (weekOffset <= 0) {
+            return
+        }
         weekOffset--;
+        if (weekOffset <= 0) {
+            document.getElementById('prev-week').disabled = true;
+        }
+        document.getElementById('next-week').disabled = false;
         let now = new Date();
         let dayOfWeek = now.getDay() || 7;
         
@@ -277,7 +308,11 @@
         });
     })
         document.getElementById('next-week').addEventListener('click', async e=>{
-            weekOffset++;
+        weekOffset++;
+        document.getElementById('prev-week').disabled = false;
+        if ((teacher || room) && weekOffset >= 1) {
+            document.getElementById('next-week').disabled = true;
+        }
         let now = new Date();
         let dayOfWeek = now.getDay() || 7;
 
@@ -317,6 +352,7 @@
         }); 
     })
     updateShedule()
+    document.getElementById('prev-week').disabled = true;
     let scheduleData = [];
     let timestamp = new URLSearchParams(window.location.search).get('timestamp');
     let fetchUrl;
@@ -357,13 +393,13 @@
     
     function renderDay(day){
     
-        document.querySelector('main').innerHTML = '';
+        document.querySelector('.Schedule').innerHTML = '';
         if(!day){
             let p = document.createElement('p')
             p.textContent = 'На этот день занятий нет';
             p.style.color = '#FFFFFF';
             p.style.textAlign = 'center';
-            document.querySelector('main').appendChild(p)
+            document.querySelector('.Schedule').appendChild(p)
             return
         }
             day.list.forEach(lesson => {
@@ -378,12 +414,12 @@
                 if(lesson.subgroup > 0){
                     clone.querySelector('.subgroup').textContent = `Подгруппа: ${lesson.subgroup}`;
                 }
-                document.querySelector('main').appendChild(clone);
+                document.querySelector('.Schedule').appendChild(clone);
         });
     };
     function renderTeacherDay(date){
 
-        document.querySelector('main').innerHTML = '';
+        document.querySelector('.Schedule').innerHTML = '';
 
         let lessons = scheduleData.filter(item =>
             new Date(item.date).toLocaleDateString('sv-SE') == date
@@ -394,7 +430,7 @@
             p.textContent = 'На этот день занятий нет';
             p.style.color = '#FFFFFF';
             p.style.textAlign = 'center';
-            document.querySelector('main').appendChild(p);
+            document.querySelector('.Schedule').appendChild(p);
             return;
         }
 
@@ -410,8 +446,11 @@
             if(lesson.subgroup > 0){
                 clone.querySelector('.subgroup').textContent = `Подгруппа: ${lesson.subgroup}`;
             }
-            document.querySelector('main').appendChild(clone);
+            document.querySelector('.Schedule').appendChild(clone);
         });
     }
+    document.getElementById('button-back').addEventListener('click',e=>{
+        history.back();
+    })
 </script>
 </html>

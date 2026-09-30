@@ -175,9 +175,6 @@
         </div>
         <button id="open-schedule">Показать расписание</button>
         <p class="warning-text"></p>
-        <h2>Избранные группы</h2>
-        <div class="saved-group">
-        </div>
     </main>    
 </body>
 <script>
@@ -193,10 +190,9 @@ let selectedCorpus = null;
 document.getElementById('group').addEventListener('click',e=> {
     clearActive()
     currentType = 'group';
-    if(document.querySelector('.select2-selection__placeholder')){
-        document.querySelector('.select2-selection__placeholder').textContent = 'Выберите номер кабинета';
-    }
     $('.select-group').val(null).trigger('change');
+    $('.select-group').data('select2').selection.placeholder.text = 'Выберите группу';
+    $('.select-group').trigger('change');
     document.getElementById('group').classList.add('active')
     document.querySelector('.choice').textContent = 'Выберите группу'
     document.querySelector('.description').textContent = 'Выберите учебную группу, чтобы увидеть расписание.' 
@@ -206,10 +202,9 @@ document.getElementById('group').addEventListener('click',e=> {
 document.getElementById('teacher').addEventListener('click',e=> {
     clearActive()
     currentType = 'teacher';
-    if(document.querySelector('.select2-selection__placeholder')){
-        document.querySelector('.select2-selection__placeholder').textContent = 'Выберите номер кабинета';
-    }
     $('.select-group').val(null).trigger('change');
+    $('.select-group').data('select2').selection.placeholder.text = 'Выберите преподавателя';
+    $('.select-group').trigger('change');
     document.getElementById('teacher').classList.add('active')
     document.querySelector('.choice').textContent = 'Выберите преподователя'
     document.querySelector('.description').textContent = 'Выберите преподователя, чтобы увидеть его расписание.' 
@@ -220,11 +215,10 @@ document.getElementById('teacher').addEventListener('click',e=> {
 
 document.getElementById('room').addEventListener('click',e=> {
     clearActive()
-    currentType = 'room';
-    if(document.querySelector('.select2-selection__placeholder')){
-        document.querySelector('.select2-selection__placeholder').textContent = 'Выберите номер кабинета';
-    }
+    currentType = 'room';        
     $('.select-group').val(null).trigger('change');
+    $('.select-group').data('select2').selection.placeholder.text = 'Выберите номер кабинета';
+    $('.select-group').trigger('change');
     document.getElementById('room').classList.add('active')
     document.querySelector('.choice').textContent = 'Выберите кабинет'
     document.querySelector('.description').textContent = 'Выберите кабинет, чтобы увидеть все занятые кабинеты.' 

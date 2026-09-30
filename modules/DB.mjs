@@ -37,7 +37,7 @@ export class DB {
         return (await DB._query('SELECT * FROM groups')).rows;
     }
 
-    static async getUserByTgId(tg_id){
+    static async getUserByTgId(tg_id) {
         return (await DB._query('SELECT * FROM users WHERE tg_id = $1', [tg_id])).rows
     }
 
@@ -48,11 +48,15 @@ export class DB {
             WHERE user_id = (SELECT id FROM users WHERE tg_id = $1)`, [tg_id])).rows;
     }
 
-    static async getAllTgIds(){
+    static async getAllTgIds() {
         return (await DB._query(`SELECT tg_id FROM users`)).rows;
     }
 
-    static async getTodaysScheduleOnGroupe(group_id){
+    static async getAllActiveTgIds() {
+        return (await DB._query(`SELECT tg_id FROM users WHERE is_active = true`)).rows;
+    }
+
+    static async getTodaysScheduleOnGroupe(group_id) {
         let today = new Date().toISOString().slice(0, 10)
         return (await DB._query('SELECT * FROM schedule WHERE group_id = $1 AND date = $2', [group_id, today])).rows;
     }
@@ -117,6 +121,19 @@ export class DB {
             [tgId]
         );
 
+    }
+
+    static async makeInactiveUsersByLastSeen() {
+        return await DB._query(`
+            UPDATE users 
+            SET is_active = false 
+            WHERE last_seen IS NOT NULL 
+              AND last_seen < (timezone('Europe/Moscow', NOW())::date - INTERVAL '14 days')
+        `);
+    }
+
+    static async makeActiveUserByTgId(tgId) {
+        return await DB._query('UPDATE users SET is_active = true WHERE tg_id = $1', [tgId]);
     }
 
     //DELETE

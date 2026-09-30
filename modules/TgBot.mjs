@@ -271,6 +271,7 @@ export class TgBot {
     static async commandStart(ctx) {
         ctx.reply('Привет! Я супер крутой парсер расписания\nПомочь? ( /help )');
         await TgBot.ensureUserExists(ctx.from.id);
+        await TgBot.App.modules.DB.makeActiveUserByTgId(ctx.from.id);
     }
 
     static commandHelp(ctx) {
@@ -278,7 +279,10 @@ export class TgBot {
             '/add_group - добавить группу в отслеживаемые\n' +
             '/my_groups - посмотреть все выбранные группы\n' +
             '/delete_group - отписаться от расписания этой группы\n' +
-            '/schedule - расписание на сегодня'
+            '/schedule - расписание на сегодня\n\n' +
+            '⚠️ Чтобы получать уведомления с расписанием, нужно как минимум раз в 2 недели нажимать кнопку «Я приду» под сообщением с расписанием.\n' +
+            'Если вы не нажимали её больше 2 недель — бот перестанет присылать уведомления.\n' +
+            'Чтобы снова их получать — выполните /start или /schedule.'
         );
     }
 
@@ -306,6 +310,8 @@ export class TgBot {
     }
 
     static async commandSchedule(ctx) {
+        await TgBot.ensureUserExists(ctx.from.id);
+        await TgBot.App.modules.DB.makeActiveUserByTgId(ctx.from.id);
         await TgBot.sendTodaySchedule(ctx.from.id, ctx);
     }
 
@@ -325,7 +331,9 @@ export class TgBot {
 
 
     static async ScheduleDistribution() {
-        let tgIds = await TgBot.App.modules.DB.getAllTgIds();
+        await TgBot.App.modules.DB.makeInactiveUsersByLastSeen();
+
+        let tgIds = await TgBot.App.modules.DB.getAllActiveTgIds();
         for (let tgId of tgIds) {
             await TgBot.sendTodaySchedule(tgId.tg_id);
         }

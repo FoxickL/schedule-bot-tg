@@ -8,6 +8,6 @@
   },
   "type": "module",
   "scripts": {
-    "start": "node --env-file=.env index.js"
+    "start": " set HTTPS_PROXY = http://127.0.0.1:10808 && node --env-file=.env app.mjs"
   }
 }

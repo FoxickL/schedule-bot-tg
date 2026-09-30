@@ -94,8 +94,20 @@ export class TgBot {
         }
     }
 
+    static async ensureUserExists(tgId) {
+        const result = await TgBot.App.modules.DB.getUserByTgId(tgId);
+        const user = result?.rows?.[0];
+
+        if (!user) {
+            await TgBot.App.modules.DB.insertTgUser(tgId);
+            return false;
+        }
+        return true;
+    }
+
     static initGroupSearchScene() {
-        this.groupSearchScene.enter((ctx) => {
+        this.groupSearchScene.enter(async (ctx) => {
+            await TgBot.ensureUserExists(ctx.from.id);
             return ctx.reply('Введите название группы для поиска:');
         });
 
@@ -257,8 +269,8 @@ export class TgBot {
 
 
     static async commandStart(ctx) {
-        ctx.reply('Салам бро\nПомочь? ( /help )');
-        await TgBot.App.modules.DB.insertTgUser(ctx.from.id);
+        ctx.reply('Привет! Я супер крутой парсер расписания\nПомочь? ( /help )');
+        await TgBot.ensureUserExists(ctx.from.id);
     }
 
     static commandHelp(ctx) {
@@ -271,6 +283,7 @@ export class TgBot {
     }
 
     static async commandAdd_group(ctx) {
+        await TgBot.ensureUserExists(ctx.from.id);
         await ctx.scene.enter('GROUP_SEARCH_SCENE');
     }
 
@@ -280,6 +293,8 @@ export class TgBot {
     }
 
     static async commandDelete_group(ctx) {
+        await TgBot.ensureUserExists(ctx.from.id);
+
         let groups = (await TgBot.App.modules.DB.getUsersGroupsByTgId(ctx.from.id))
         let inlineButtons = groups.map(group =>
             Markup.button.callback(String(group.name), `delete_group:${group.id}`)

@@ -37,6 +37,10 @@ export class DB {
         return (await DB._query('SELECT * FROM groups')).rows;
     }
 
+    static async getUserByTgId(tg_id){
+        return (await DB._query('SELECT * FROM users WHERE tg_id = $1', [tg_id])).rows
+    }
+
     static async getUsersGroupsByTgId(tg_id) {
         return (await DB._query(`SELECT groups.id , groups.name
             FROM user_groups

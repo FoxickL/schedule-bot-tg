@@ -1,9 +1,16 @@
 import { Telegraf, Scenes, session, Markup } from 'telegraf';
 import { env } from "process";
 import cron from 'node-cron';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+
+const proxyAgent = new HttpsProxyAgent('http://127.0.0.1:10808');
 
 export class TgBot {
-    static bot = new Telegraf(env.TG_BOT_TOKEN);
+    static bot = new Telegraf(env.TG_BOT_TOKEN, {
+        telegram: {
+            agent: proxyAgent
+        }
+    });
     static stage;
     static groupSearchScene = new Scenes.BaseScene('GROUP_SEARCH_SCENE');
 
@@ -118,7 +125,7 @@ export class TgBot {
             }
 
             await TgBot.App.modules.DB.insertUsersGroup(ctx.from.id, groupName);
-            
+
             try {
                 await TgBot.App.modules.Schedule.downloadScheduleForGroup(
                     group,

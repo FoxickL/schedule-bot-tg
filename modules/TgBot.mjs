@@ -32,13 +32,6 @@ export class TgBot {
         this.bot.use(session());
         this.bot.use(this.stage.middleware());
 
-        this.bot.use((ctx, next) => {
-            if (ctx.callbackQuery && ctx.callbackQuery.data.startsWith('select_group:')) {
-                return next();
-            }
-            return next();
-        });
-
         this.bot.on('text', (ctx) => {
             if (ctx.scene && ctx.scene.current) {
                 return;
@@ -54,23 +47,31 @@ export class TgBot {
             }
         });
 
-        this.bot.on('callback_query', (ctx) => {
-            if (ctx.scene && ctx.scene.current) return;
+        
+        this.bot.on('callback_query', async (ctx) => {
+            try {
+                const data = ctx.callbackQuery.data;
 
-            let data = ctx.callbackQuery.data;
+                
+                if (buttons.has(data.toLowerCase())) {
+                    await buttons.get(data.toLowerCase()).call(this, ctx);
+                    return;
+                }
 
-            if (buttons.has(data.toLowerCase())) {
-                buttons.get(data.toLowerCase()).call(this, ctx);
-                ctx.answerCbQuery().catch(() => { });
-                return;
-            }
+                
+                const [prefix, ...rest] = data.split(':');
+                const key = prefix.toLowerCase();
+                if (buttons.has(key)) {
+                    ctx.match = [data, rest.join(':')];
+                    await buttons.get(key).call(this, ctx);
+                    return;
+                }
 
-            let [prefix, ...rest] = data.split(':');
-            let key = prefix.toLowerCase();
-            if (buttons.has(key)) {
-                ctx.match = [data, rest.join(':')];
-                buttons.get(key).call(this, ctx);
-                ctx.answerCbQuery().catch(() => { });
+                
+                await ctx.answerCbQuery().catch(() => { });
+            } catch (e) {
+                console.error('[CB ERROR]', e.stack);
+                await ctx.answerCbQuery('Ошибка').catch(() => { });
             }
         });
 
@@ -127,36 +128,43 @@ export class TgBot {
             );
         });
 
+        
         this.groupSearchScene.action(/^select_group:(.+)$/, async (ctx) => {
             const groupName = ctx.match[1];
 
-            let group = await TgBot.App.modules.DB.findGroup(groupName);
-            if (!group) {
-                await TgBot.App.modules.DB.insertGroup(groupName);
-                group = await TgBot.App.modules.DB.findGroup(groupName);
-            }
-
-            await TgBot.App.modules.DB.insertUsersGroup(ctx.from.id, groupName);
-
             try {
-                await TgBot.App.modules.Schedule.downloadScheduleForGroup(
-                    group,
-                    TgBot.App.modules.Schedule.getMondayMidnight()
-                );
-                await TgBot.App.modules.Schedule.downloadScheduleForGroup(
-                    group,
-                    TgBot.App.modules.Schedule.getMondayMidnight() + 604800
-                );
+                let group = await TgBot.App.modules.DB.findGroup(groupName);
+                if (!group) {
+                    await TgBot.App.modules.DB.insertGroup(groupName);
+                    group = await TgBot.App.modules.DB.findGroup(groupName);
+                }
+
+                await TgBot.App.modules.DB.insertUsersGroup(ctx.from.id, groupName);
+
+                try {
+                    await TgBot.App.modules.Schedule.downloadScheduleForGroup(
+                        group,
+                        TgBot.App.modules.Schedule.getMondayMidnight()
+                    );
+                    await TgBot.App.modules.Schedule.downloadScheduleForGroup(
+                        group,
+                        TgBot.App.modules.Schedule.getMondayMidnight() + 604800
+                    );
+                } catch (e) {
+                    console.error('Ошибка загрузки расписания для группы', groupName, e.stack);
+                }
+
+                await ctx.answerCbQuery().catch(() => { });
+                await ctx.reply(`Отлично! Вы выбрали группу ${groupName}.`);
+
+                await TgBot.sendTodayScheduleForGroup(ctx.from.id, group.id, group.name, ctx);
             } catch (e) {
-                console.error('Ошибка загрузки расписания для группы', groupName, e.stack);
+                console.error('[select_group ERROR]', e.stack);
+                await ctx.reply('Что-то пошло не так, попробуйте ещё раз.').catch(() => { });
+            } finally {
+                
+                await ctx.scene.leave().catch(() => { });
             }
-
-            await ctx.answerCbQuery().catch(() => { });
-            await ctx.reply(`Отлично! Вы выбрали группу ${groupName}.`);
-
-            await TgBot.sendTodayScheduleForGroup(ctx.from.id, group.id, group.name, ctx);
-
-            return ctx.scene.leave();
         });
     }
 
@@ -320,13 +328,15 @@ export class TgBot {
         let groupId = ctx.match[1];
         await TgBot.App.modules.DB.deleteUsersGroup(ctx.from.id, groupId);
         await TgBot.App.modules.DB.deleteInactiveGroups();
-        await ctx.answerCbQuery('Удалено').catch(() => { });
-        await ctx.editMessageText('Группа удалена.');
+        await ctx.editMessageText('Группа удалена.').catch(() => { });
     }
 
+    
+    
     static async buttonI_will_come(ctx) {
         await TgBot.App.modules.DB.updateUsersLastSeen(ctx.from.id);
-        await ctx.answerCbQuery('Отлично! Ждём тебя 👍').catch(() => { });
+        await ctx.editMessageReplyMarkup({ inline_keyboard: [] }).catch(() => { });
+        await ctx.reply('Отлично! Ждём тебя 👍').catch(() => { });
     }
 
 

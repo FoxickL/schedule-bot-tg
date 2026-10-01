@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+        min-height: 100vh;
+        background-color:#121826;
+        color: white;
+    }
+    
+    main {
+        max-width: 420px;
+        margin: 0 auto;
+        padding: 60px 24px 24px;
+    }
+    
+    .img {
+        height: 120px;
+        margin: 0 auto 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 42px;
+    }
+    h1 {
+        margin-top: 10px;
+        text-align: center;
+        font-size: 28px;
+        margin-bottom: 16px;
+    }
+    h2 {
+        margin-top: 30px;
+        text-align: center;
+        font-size: 18px;
+        margin-bottom: 16px;
+    }
+    .description {
+        text-align: center;
+        color: #8f98b3;
+        line-height: 1.5;
+        margin-bottom: 32px;
+    }
+    .choose-group{
+        display: flex;
+        justify-content: center;
+    }
+    .saved-group {
+        width: 440px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .saved-group button {
+        border: none;
+        background: #1a2440;
+        color: white;
+        padding: 10px 18px;
+        border-radius: 20px;
+        cursor: pointer;
+    }
+    
+    .select2-container .select2-selection--single {
+        height: 55px;
+        background: #151f36;
+        border: 1px solid #263250;
+        border-radius: 15px;
+    }
+    .select2-container .select2-selection--single
+    .select2-selection__rendered {
+        color: white;
+        line-height: 55px;
+        padding-left: 18px;
+    }
+    .select2-container .select2-selection--single
+    .select2-selection__arrow {
+        height: 55px;
+        right: 10px;
+    }
+    .select2-dropdown {
+        background: #151f36;
+        border: 1px solid #263250;
+    }
+    .select2-search--dropdown {
+        padding: 10px;
+    }
+    .select2-search--dropdown .select2-search__field {
+        width: 100%;
+        background: #0d1629;
+        color: white;
+        padding: 10px;
+    }
+    
+    .select2-results__option {
+        color: white;
+        padding: 12px 16px;
+    }
+    .select2-results__option--highlighted {
+        background: #7063ff !important;
+    }
+    .warning-text {
+        margin-top: 12px;
+        text-align: center;
+        font-size: 13px;
+        color: #8f98b3;
+        line-height: 1.4;
+    }
+    
+    .search-type{
+        display:flex;
+        gap:10px;
+        margin-bottom:20px;
+    }
+    
+    .search-type button{
+        flex:1;
+        border:none;
+        background:#1E2433;
+        color:#8f98b3;
+        padding:12px;
+        border-radius:12px;
+        cursor:pointer;
+        transition:250ms;
+        font-size:14px;
+    }
+    
+    .search-type button.active{
+        background:#7063ff;
+        color:white;
+    }
+    #open-schedule{
+        width:300px;
+        margin:20px auto 0;
+        display:block;
+        border:none;
+        background:#7063ff;
+        color:white;
+        padding:14px;
+        border-radius:12px;
+        cursor:pointer;
+        font-size:15px;
+    }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="img">
+            <img src="../picture/1.png" height="50px"> 
+        </div>
+        <h2>Выберите тип поиска</h2>
+        <div class="search-type">
+            <button id="group" class="active">Группы</button>
+            <button id="teacher">Преподаватели</button>
+            <button id="room">Кабинеты</button>
+        </div>
+        <h1 class="choice">Выберите группу</h1>
+         <p class="description">Выберите учебную группу, чтобы увидеть расписание.</p>
+        <div class="choose-group">
+            <select class="select-group">
+                <option></option>
+            </select>
+        </div>
+        <button id="open-schedule">Показать расписание</button>
+        <p class="warning-text"></p>
+    </main>    
+</body>
+<script>
+function clearActive() {
+    document.getElementById('group').classList.remove('active');
+    document.getElementById('teacher').classList.remove('active');
+    document.getElementById('room').classList.remove('active');
+}
+let currentType = 'group';
+let selectedId = null;
+let selectedCorpus = null;
+
+document.getElementById('group').addEventListener('click',e=> {
+    clearActive()
+    currentType = 'group';
+    $('.select-group').val(null).trigger('change');
+    $('.select-group').data('select2').selection.placeholder.text = 'Выберите группу';
+    $('.select-group').trigger('change');
+    document.getElementById('group').classList.add('active')
+    document.querySelector('.choice').textContent = 'Выберите группу'
+    document.querySelector('.description').textContent = 'Выберите учебную группу, чтобы увидеть расписание.' 
+    document.querySelector('.warning-text').textContent = ''
+});
+
+document.getElementById('teacher').addEventListener('click',e=> {
+    clearActive()
+    currentType = 'teacher';
+    $('.select-group').val(null).trigger('change');
+    $('.select-group').data('select2').selection.placeholder.text = 'Выберите преподавателя';
+    $('.select-group').trigger('change');
+    document.getElementById('teacher').classList.add('active')
+    document.querySelector('.choice').textContent = 'Выберите преподователя'
+    document.querySelector('.description').textContent = 'Выберите преподователя, чтобы увидеть его расписание.' 
+    document.querySelector('.warning-text').textContent = 'Некоторые данные могуть быть не полноценные'
+});
+    
+
+
+document.getElementById('room').addEventListener('click',e=> {
+    clearActive()
+    currentType = 'room';        
+    $('.select-group').val(null).trigger('change');
+    $('.select-group').data('select2').selection.placeholder.text = 'Выберите номер кабинета';
+    $('.select-group').trigger('change');
+    document.getElementById('room').classList.add('active')
+    document.querySelector('.choice').textContent = 'Выберите кабинет'
+    document.querySelector('.description').textContent = 'Выберите кабинет, чтобы увидеть все занятые кабинеты.' 
+    document.querySelector('.warning-text').textContent = 'Некоторые данные могуть быть не полноценные'
+});
+
+
+$(document).ready(function () {
+
+    $('.select-group').select2({
+        placeholder:'Выберите группу',
+        width: '300px',
+        ajax: {
+            transport: async (params, success) => {
+                let search = params.data.term || '';
+                let url;
+                if(currentType == 'group'){
+                    url = `/api/groups?q=${search}`;
+                }
+                else if(currentType == 'teacher'){
+                    url = `/api/teachers?q=${search}`;
+                }
+                else{
+                    url = `/api/auditoriums?q=${search}`;
+                }
+                let response = await fetch(url);
+                let data = await response.json();
+                let results;
+                 if (currentType == 'group') {
+                    results = data.results;
+                }
+                else if (currentType == 'teacher') {
+                    results = data.map(teacher => ({
+                        id: teacher.teacher,
+                        text: teacher.teacher
+                    }));
+                }
+                else {
+                    results = data.map(room => ({
+                        id: room.auditorium,
+                        text: `${room.auditorium} - ${room.corpus}`,
+                        corpus: room.corpus
+                    }));
+                }
+                success({
+                    results: results
+                });
+            },
+
+            delay: 300
+        }
+    });
+
+    $('.select-group').on('select2:select', async function (e) {
+        selectedId = e.params.data.id;
+        selectedCorpus = e.params.data.corpus;
+    });
+        function getMondayTimestamp() {
+            let now = new Date();
+            let day = now.getDay(); 
+            let diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    
+            let monday = new Date(now.setDate(diff));
+            monday.setHours(0, 0, 0, 0); 
+            return Math.floor(monday.getTime() / 1000);       
+    }
+    let mondayTimestamp = getMondayTimestamp();
+
+
+document.getElementById('open-schedule').addEventListener('click', () => {
+
+    if (!selectedId) {
+        alert('Сначала выберите значение');
+        return;
+    }
+
+    if (currentType == 'group') {
+        window.location.href = `schedule.html?group=${selectedId}&timestamp=${mondayTimestamp}`;
+    }
+    else if (currentType == 'teacher') {
+        window.location.href = `schedule.html?teacher=${selectedId}`;
+    }
+    else {
+        window.location.href = `schedule.html?room=${selectedId}&corpus=${selectedCorpus}`;
+    }
+
+});
+});
+</script>
+</html>
